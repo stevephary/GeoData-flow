@@ -6,28 +6,31 @@ import json, base64
 
 
 def json_zip_writer(data, filename):
-    f = gzip.open(filename, 'wb')
-    f.write(json.dumps(data).encode('utf-8'))
-    f.close()
+    try:
+        f = gzip.open(filename, 'wb')
+        f.write(json.dumps(data).encode('utf-8'))
+        f.close()
+    except Exception as e:
+        print(f"Error while saving data to {filename}: {e}")
 
 
-def json_zip(j):
+def json_zip(data):
 
     # return base64.b64encode(zlib.compress(json.dumps(j).encode('utf-8'))).decode('ascii')
-    return zlib.compress(json.dumps(j).encode('utf-8'))
+    return zlib.compress(json.dumps(data).encode('utf-8'))
 
 
-def json_unzip(j, insist=True):
+def json_unzip(data, insist=True):
 
     try:
         # j = zlib.decompress(base64.b64decode(j))
-        j = zlib.decompress(j)
+        data = zlib.decompress(data)
     except:
         raise RuntimeError("Could not decode/unzip the contents")
 
     try:
-        j = json.loads(j)
+        data = json.loads(data)
     except:
         raise RuntimeError("Could interpret the unzipped contents")
 
-    return j
+    return data
