@@ -23,18 +23,3 @@ class Boto3Connector(object):
             endpoint_url=self.endpoint_url,
         )
         return s3_client
-
-
-@resource(
-    config_schema={
-        'aws_access_key_id': Field(str),
-        'aws_secret_access_key': Field(str),
-        'endpoint_url': Field(str),
-    }
-)
-def boto3_connection(context):
-    return Boto3Connector(
-        context.resource_config['aws_access_key_id'],
-        context.resource_config['aws_secret_access_key'],
-        context.resource_config['endpoint_url'],
-    )

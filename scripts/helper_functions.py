@@ -5,9 +5,9 @@ import gzip
 import json, base64
 
 
-def json_zip_writer(j, target_key):
-    f = gzip.open(target_key, 'wb')
-    f.write(json.dumps(j).encode('utf-8'))
+def json_zip_writer(data, filename):
+    f = gzip.open(filename, 'wb')
+    f.write(json.dumps(data).encode('utf-8'))
     f.close()
 
 

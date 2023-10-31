@@ -2,82 +2,90 @@ import requests
 import time
 import pandas as pd
 from decouple import config
+from helper_functions import json_zip_writer
 
-
+# Constants
 COUNTRIES_URL = config('COUNTRIES_URL')
 API_KEY = config('API_KEY')
 API_HOST = config('API_HOST')
 
 headers = {
-        "X-RapidAPI-Key": API_KEY,
-        "X-RapidAPI-Host": API_HOST
-    }
+    "X-RapidAPI-Key": API_KEY,
+    "X-RapidAPI-Host": API_HOST
+}
 
+# Function to make an API request and handle responses
+def make_api_request(url, params=None):
+    response = requests.get(url, headers=headers, params=params)
 
+    if response.status_code == 200:
+        return response.json()['data']
+    else:
+        return None
+
+# Function to get a list of countries
 def get_countries():
     url = COUNTRIES_URL
-
-    # Set the initial offset and limit
     offset = 0
     limit = 10
-
-    # Create an empty list to store the data
     data = []
 
-    for iteration in range(1):  # Perform 10 iterations
+    for _ in range(1):  # Perform 1 iteration (adjust as needed)
         params = {"limit": limit, "offset": offset}
+        countries_data = make_api_request(url, params)
 
-        response = requests.get(url, headers=headers, params=params)
-
-        if response.status_code == 200:
-            countries_data = response.json()
-            for country in countries_data['data']:
-                data.append([country['name'], country['code']])
-
-            # Increment the offset for the next iteration
+        if countries_data:
+            data.extend([(country['name'], country['code']) for country in countries_data])
             offset += limit
-
         else:
-            print("Failed to retrieve data. Status code:", response.status_code)
-
+            print("Failed to retrieve data.")
         time.sleep(1)
 
-    # Create a DataFrame for countries
     countries = pd.DataFrame(data, columns=["Name", "Code"])
-    
+
+    json_zip_writer(countries.to_json(orient='records'), "data/countries.json.gz")
+
     return countries
 
-def get_country_details(countries_df):
-
+# Function to get details for each country
+def get_country_details(country):
     country_details = []
 
-    for index, row in countries_df.iterrows():
+    for index, row in country.iterrows():
         country_code = row['Code']
         country_url = f"https://wft-geo-db.p.rapidapi.com/v1/geo/countries/{country_code}"
-        response = requests.get(country_url, headers=headers)
-        
-        if response.status_code == 200:
-            country_data = response.json()
-            country_details.append(country_data)
+        response_data = make_api_request(country_url)
+
+        if response_data:
+            country_details.append(response_data)
         else:
-            print(f"Failed to retrieve details for {row['Name']} ({country_code}). Status code:", response.status_code)
+            print(f"Failed to retrieve details for {row['Name']} ({country_code}). Status code:", response_data.status_code)
         time.sleep(1)
-    
+
+    json_zip_writer(country_details, "data/country_details.json.gz")
+
     return country_details
 
-def get_country_places(places):
+# Function to get place details for each country
+def get_country_places(country):
     place_details = []
-    
-    for index, row in places.iterrows():
+
+    for index, row in country.iterrows():
         country_code = row['Code']
         country_url = f"https://wft-geo-db.p.rapidapi.com/v1/geo/countries/{country_code}/places"
-        response = requests.get(country_url, headers=headers)
-        
-        if response.status_code == 200:
-            place_data = response.json()
-            place_details.append(place_data)
+        response_data = make_api_request(country_url)
+
+        if response_data:
+            place_details.append(response_data)
         else:
-            print(f"Failed to retrieve place details for {row['Name']} ({country_code}). Status code:", response.status_code)
+            print(f"Failed to retrieve place details for {row['Name']} ({country_code}). Status code:", response_data.status_code)
         time.sleep(1)
-    
+    json_zip_writer(place_details, "data/place_details.json.gz")
+
     return place_details
+
+if __name__ == "__main__":
+    data = get_countries()
+    places = get_country_places(data)
+    details = get_country_details(data)
+
