@@ -4,6 +4,7 @@ from pandas import DataFrame
 from decouple import config
 from helper_functions import json_zip_writer
 
+from dagster_aws.s3 import S3Coordinate
 # Constants
 COUNTRIES_URL = config('COUNTRIES_URL')
 API_KEY = config('API_KEY')
@@ -64,11 +65,12 @@ def get_country_details(country):
 
         country_detail = DataFrame(country_details)
 
+        json_zip_writer(country_detail.to_json(orient='records'), "data/country_details.json.gz")
+
     return country_detail
 
 # Function to get place details for each country
 def get_country_places(country):
-    place_details = []
 
     for index, row in country.iterrows():
         country_code = row['Code']
@@ -76,16 +78,12 @@ def get_country_places(country):
         response_data = make_api_request(country_url)
 
         if response_data:
-            place_details.append(response_data)
+            places = DataFrame(response_data)
         else:
             print(f"Failed to retrieve place details for {row['Name']} ({country_code}). Status code:", response_data.status_code)
         time.sleep(1)
 
+
+    json_zip_writer(places.to_json(orient='records'), "data/country_places.json.gz")
         
-    return place_details
-
-if __name__ == "__main__":
-    data = get_countries()
-    places = get_country_places(data)
-    details = get_country_details(data)
-
+    return places
