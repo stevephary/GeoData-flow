@@ -1,6 +1,6 @@
 import requests
 import time
-import pandas as pd
+from pandas import DataFrame
 from decouple import config
 from helper_functions import json_zip_writer
 
@@ -41,7 +41,7 @@ def get_countries():
             print("Failed to retrieve data.")
         time.sleep(1)
 
-    countries = pd.DataFrame(data, columns=["Name", "Code"])
+    countries = DataFrame(data, columns=["Name", "Code"])
 
     json_zip_writer(countries.to_json(orient='records'), "data/countries.json.gz")
 
@@ -62,9 +62,9 @@ def get_country_details(country):
             print(f"Failed to retrieve details for {row['Name']} ({country_code}). Status code:", response_data.status_code)
         time.sleep(1)
 
-    json_zip_writer(country_details, "data/country_details.json.gz")
+        country_detail = DataFrame(country_details)
 
-    return country_details
+    return country_detail
 
 # Function to get place details for each country
 def get_country_places(country):
@@ -80,8 +80,8 @@ def get_country_places(country):
         else:
             print(f"Failed to retrieve place details for {row['Name']} ({country_code}). Status code:", response_data.status_code)
         time.sleep(1)
-    json_zip_writer(place_details, "data/place_details.json.gz")
 
+        
     return place_details
 
 if __name__ == "__main__":
