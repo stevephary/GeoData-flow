@@ -87,3 +87,4 @@ def get_country_places(country):
     json_zip_writer(places.to_json(orient='records'), "data/country_places.json.gz")
         
     return places
+
